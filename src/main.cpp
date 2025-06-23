@@ -2,31 +2,26 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <iostream>
-#include <gl2d/gl2d.h>
-#include <openglErrorReporting.h>
-#include "imgui.h"
-#include "backends/imgui_impl_glfw.h"
-#include "backends/imgui_impl_opengl3.h"
-#include "imguiThemes.h"
-#include "header/shdr.h"
 
-static void error_callback(int error, const char *description)
-{
-	std::cout << "Error: " <<  description << "\n";
+static void error_callback(int error, const char *description) {
+	std::cerr << "Error: " << description << std::endl;
 }
 
+const char *vertexShaderSource = R"(
+#version 330 core
+layout (location = 0) in vec3 aPos;
+void main() {
+	gl_Position = vec4(aPos, 1.0);
+}
+)";
 
-// ========== TEMP-SHADER ===========
-
-const char *vertexShaderSource = "#version 330 core\n"
-	"layout (location = 0) in vec3 aPos;\n"
-	"void main()\n"
-	"{\n"
-	"   gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
-	"}\0";
-
-
-
+const char *fragmentShaderSource = R"(
+#version 330 core
+out vec4 FragColor;
+void main() {
+	FragColor = vec4(1.0, 0.5, 0.2, 1.0);
+}
+)";
 
 float vertices[] = {
 	-0.5f, -0.5f, 0.0f,
@@ -34,80 +29,80 @@ float vertices[] = {
 	 0.0f,  0.5f, 0.0f
 };
 
-int main()
-{
 
-	// Bare minimum Window Setup
 
+
+int main() {
 	glfwSetErrorCallback(error_callback);
-
-	if (!glfwInit())
-		exit(EXIT_FAILURE);
+	if (!glfwInit()) return -1;
 
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
+	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-
-	GLFWwindow *window = glfwCreateWindow(640, 480, "Simple example", nullptr, nullptr);
-	if (!window)
-	{
+	GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL Triangle", nullptr, nullptr);
+	if (!window) {
 		glfwTerminate();
-		exit(EXIT_FAILURE);
+		return -1;
 	}
-
 	glfwMakeContextCurrent(window);
-	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
-	{
-		glfwTerminate();
-		exit(EXIT_FAILURE);
+
+	if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress)) {
+		std::cerr << "Failed to initialize GLAD" << std::endl;
+		return -1;
 	}
 
-	enableReportGlErrors();
-
-	// ========= BUFFER AND SHADER SHII =========
-
-	GLuint shaderProgram = glCreateProgram();
-	GLuint VBO{};
+	// Shader kompilieren
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
-	int success{};
-
-	glGenBuffers(1, &VBO);
-	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-	// glBindBuffer(VBO, GL_ARRAY_BUFFER);
+	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
 	glCompileShader(vertexShader);
 
-	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
+	GLuint fragmentShader = glCreateShader(GL_FRAGMENT_SHADER);
+	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
+	glCompileShader(fragmentShader);
 
-	std::cout << success << std::endl;
+	GLuint shaderProgram = glCreateProgram();
+	glAttachShader(shaderProgram, vertexShader);
+	glAttachShader(shaderProgram, fragmentShader);
+	glLinkProgram(shaderProgram);
 
-	if (success == 0) {
-		return 1;
-	}
+	glDeleteShader(vertexShader);
+	glDeleteShader(fragmentShader);
 
-	// Shader Shader("shader/default.vert", "shader/default.frag");
+	// VAO, VBO erstellen
+	GLuint VAO, VBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
 
+	glBindVertexArray(VAO);
 
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Shader.Activate();
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
 
+	glBindBuffer(GL_ARRAY_BUFFER, 0);
+	glBindVertexArray(0);
 
-
-
+	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 
 	while (!glfwWindowShouldClose(window)) {
-
-		// Main Loop
-
-		int width = 0, height = 0;
-		glfwGetFramebufferSize(window, &width, &height);
-		glViewport(0, 0, width, height);
 		glClear(GL_COLOR_BUFFER_BIT);
+
+		glUseProgram(shaderProgram);
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+
 		glfwSwapBuffers(window);
 		glfwPollEvents();
 	}
+
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteProgram(shaderProgram);
+
 	glfwDestroyWindow(window);
 	glfwTerminate();
-
 	return 0;
 }
-
