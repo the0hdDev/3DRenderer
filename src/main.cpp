@@ -4,21 +4,10 @@
 #include <iostream>
 #include <cmath> // Für cos/sin
 
+// GLFW Fehler-Callback
 static void error_callback(int error, const char *description) {
 	std::cerr << "Error: " << description << std::endl;
 }
-
-
-float angle = 45;
-float cosA = cos(angle);
-float sinA = sin(angle);
-
-float rotationMatrixX[] = {
-	1.0f, 0.0f,  0.0f, 0.0f,
-	0.0f, cosA, -sinA, 0.0f,
-	0.0f, sinA,  cosA, 0.0f,
-	0.0f, 0.0f,  0.0f, 1.0f
-};
 
 // Vertex Shader: empfängt Rotationsmatrix als Uniform
 const char *vertexShaderSource = R"(
@@ -44,9 +33,9 @@ void main() {
 }
 )";
 
-// Ursprüngliche Dreiecks-Vertices
+// Alle Cube-Vertices und Farben
 float vertices[] = {
-	// Position            // Farbe (RGB)
+	// Position             // Farbe
 	// Front Face (rot)
 	-0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,
 	 0.5f, -0.5f,  0.5f,   1.0f, 0.0f, 0.0f,
@@ -100,11 +89,12 @@ int main() {
 	glfwSetErrorCallback(error_callback);
 	if (!glfwInit()) return -1;
 
+	// OpenGL Context erstellen
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MAJOR, 3);
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
-	GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL Rotating Triangle", nullptr, nullptr);
+	GLFWwindow *window = glfwCreateWindow(800, 600, "OpenGL Rotating Cube", nullptr, nullptr);
 	if (!window) {
 		glfwTerminate();
 		return -1;
@@ -116,12 +106,11 @@ int main() {
 		return -1;
 	}
 
-	// Shader kompilieren
+	// Shader kompilieren und Programm erstellen
 	GLuint vertexShader = glCreateShader(GL_VERTEX_SHADER);
 	glShaderSource(vertexShader, 1, &vertexShaderSource, nullptr);
 	glCompileShader(vertexShader);
 
-	// Fehler-Check für Vertex Shader
 	int success;
 	char infoLog[512];
 	glGetShaderiv(vertexShader, GL_COMPILE_STATUS, &success);
@@ -134,7 +123,6 @@ int main() {
 	glShaderSource(fragmentShader, 1, &fragmentShaderSource, nullptr);
 	glCompileShader(fragmentShader);
 
-	// Fehler-Check für Fragment Shader
 	glGetShaderiv(fragmentShader, GL_COMPILE_STATUS, &success);
 	if (!success) {
 		glGetShaderInfoLog(fragmentShader, 512, NULL, infoLog);
@@ -146,7 +134,6 @@ int main() {
 	glAttachShader(shaderProgram, fragmentShader);
 	glLinkProgram(shaderProgram);
 
-	// Fehler-Check für Shader Program
 	glGetProgramiv(shaderProgram, GL_LINK_STATUS, &success);
 	if (!success) {
 		glGetProgramInfoLog(shaderProgram, 512, NULL, infoLog);
@@ -156,56 +143,77 @@ int main() {
 	glDeleteShader(vertexShader);
 	glDeleteShader(fragmentShader);
 
-	// VAO, VBO erstellen
+	// VAO und VBO einrichten
 	GLuint VAO, VBO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
 
 	glBindVertexArray(VAO);
-
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 
-	// Attribut-Zeiger setzen (3 floats pro Vertex)
-	// Position: 3 floats, offset 0, stride 6 floats
+	// Position Attribut
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	// Farbe: 3 floats, offset nach 3 floats, stride 6 floats
+	// Farb-Attribut
 	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3 * sizeof(float)));
 	glEnableVertexAttribArray(1);
 
-
-	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
 	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
-
-	// Hole Uniform-Location der Rotationsmatrix
-	GLint rotationLoc = glGetUniformLocation(shaderProgram, "rotation");
-
 	glEnable(GL_DEPTH_TEST);
 
+	// Uniform-Location abrufen
+	GLint rotationLoc = glGetUniformLocation(shaderProgram, "rotation");
+
 	while (!glfwWindowShouldClose(window)) {
-		// Ganz am Anfang clear, und zwar **Farbe + Depth**
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-		// Rotation, Uniform setzen, Shader aktivieren ...
-		float time = glfwGetTime();
-		float angle = time;
-		float cosA = std::cos(angle);
-		float sinA = std::sin(angle);
+		// Dynamischer Y-Winkel
+		float angleY = glfwGetTime();
+		float cosY = std::cos(angleY);
+		float sinY = std::sin(angleY);
 
-		float rotationMatrix[] = {
-			cosA, 0.0f, sinA, 0.0f,
-			0.0f, 1.0f, 0.0f, 0.0f,
-		   -sinA, 0.0f, cosA, 0.0f,
-			0.0f, 0.0f, 0.0f, 1.0f
-	   };
+		// Statischer X-Winkel (45°)
+		float angleX = 45.0f;
+		float cosX = std::cos(angleX);
+		float sinX = std::sin(angleX);
 
+		// Rotation um X
+		float rotX[] = {
+			1,    0,     0,    0,
+			0,  cosX, -sinX,   0,
+			0,  sinX,  cosX,   0,
+			0,    0,     0,    1
+		};
+
+		// Rotation um Y
+		float rotY[] = {
+			cosY, 0, sinY, 0,
+			0,    1, 0,    0,
+		   -sinY, 0, cosY, 0,
+			0,    0, 0,    1
+		};
+
+		// Multiplikation: rotY * rotX
+		float rotationMatrix[16];
+		for (int row = 0; row < 4; row++) {
+			for (int col = 0; col < 4; col++) {
+				rotationMatrix[col + row * 4] =
+					rotY[0 + row * 4] * rotX[col + 0] +
+					rotY[1 + row * 4] * rotX[col + 4] +
+					rotY[2 + row * 4] * rotX[col + 8] +
+					rotY[3 + row * 4] * rotX[col +12];
+			}
+		}
+
+		// Shader aktivieren und Uniform setzen
 		glUseProgram(shaderProgram);
 		glUniformMatrix4fv(rotationLoc, 1, GL_FALSE, rotationMatrix);
 
+		// Cube zeichnen
 		glBindVertexArray(VAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
 
@@ -213,8 +221,7 @@ int main() {
 		glfwPollEvents();
 	}
 
-
-	// Aufräumen
+	// Ressourcen freigeben
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
 	glDeleteProgram(shaderProgram);
