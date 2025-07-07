@@ -179,7 +179,7 @@ int main() {
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
 
-	glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f);
 
 	// Hole Uniform-Location der Rotationsmatrix
 	GLint rotationLoc = glGetUniformLocation(shaderProgram, "rotation");
