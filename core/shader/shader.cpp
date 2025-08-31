@@ -1,5 +1,5 @@
 
-#include"shdr.h"
+#include"shader.h"
 
 using std::string;
 
