@@ -1,6 +1,8 @@
 add_library(util STATIC
-        parsing/tiny_obj_loader.h
+        parsing/objLoaderBackend.h
         parsing/tiny_obj_loader.cpp
+        parsing/objLoader.h
+        parsing/objLoader.cpp
 )
 
 target_include_directories(util PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
