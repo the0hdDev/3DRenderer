@@ -1,5 +1,5 @@
 # Neon - Perspective 3D Rendering Engine
-
+[![CMake on multiple platforms](https://github.com/the0hdDev/Neon/actions/workflows/cmake-multi-platform.yml/badge.svg)](https://github.com/the0hdDev/Neon/actions/workflows/cmake-multi-platform.yml) 
 --- 
 
 Neon is set to be a standalone 3D Model Viewer with a 
