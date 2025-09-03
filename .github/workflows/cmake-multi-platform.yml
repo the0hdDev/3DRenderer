@@ -55,7 +55,6 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT" 
 
     - name: Clone VCPKG 
-
       run: > 
         git clone https://github.com/microsoft/vcpkg.git 
 
@@ -75,7 +74,7 @@ jobs:
 
     - name: Install X11 development libraries
       if: runner.os != 'Windows'
-      run: sudo apt-get update && sudo apt-get install -y libx11-dev
+      run: sudo apt-get update && sudo apt-get install -y libx11-dev libxrandr-dev
 
     - name: Install Packages (macOS/linux) 
       if: runner.os != 'Windows'
