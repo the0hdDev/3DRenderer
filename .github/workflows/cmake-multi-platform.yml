@@ -57,7 +57,7 @@ jobs:
     - name: Clone VCPKG 
 
       run: > 
-        git clone https://github.com/microsoft/vcpkg.git .
+        git clone https://github.com/microsoft/vcpkg.git 
 
     - name: Bootstrap vcpkg (Linux/macOS)
       if: runner.os != 'Windows'
@@ -77,7 +77,11 @@ jobs:
       if: runner.os != 'Windows'
       run: >
         ./vcpkg/vcpkg install glad glfw3 glm
-      
+
+    - name: Install Packages (Windows) 
+      if: runner.os == 'Windows'
+      run: > 
+        .\vcpkg\
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
