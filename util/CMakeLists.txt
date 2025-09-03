@@ -1,6 +1,5 @@
 add_library(util STATIC
         parsing/objLoaderBackend.h
-        parsing/tiny_obj_loader.cpp
         parsing/objLoader.h
         parsing/objLoader.cpp
 )
